@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMI Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-group select {
+            cursor: pointer;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .breakdown {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .breakdown th,
+        .breakdown td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .breakdown th {
+            background-color: #f4f4f4;
+        }
+        .note {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 14px;
+            color: #888;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+        }
+        .footer a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .footer a:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>EMI Calculator</h1>
+        <div class="form-group">
+            <label for="loanAmount">Loan Amount (₹):</label>
+            <input type="number" id="loanAmount" placeholder="Enter loan amount" required>
+        </div>
+        <div class="form-group">
+            <label for="interestRate">Annual Interest Rate (%):</label>
+            <select id="interestRate">
+
+<option value="1">1.00%</option>
+<option value="2">2.00%</option>
+<option value="3">3.00%</option>
+<option value="4">4.00%</option>
+<option value="5">5.00%</option>
+<option value="6">6.00%</option>
+                <option value="7">7.00%</option>
+                <option value="7.5">7.50%</option>
+                <option value="8">8.00%</option>
+                <option value="8.5">8.50%</option>
+                <option value="9">9.00%</option>
+                <option value="9.5">9.50%</option>
+                <option value="10">10.00%</option>
+                <option value="10.5">10.50%</option>
+                <option value="11">11.00%</option>
+                <option value="11.5">11.50%</option>
+                <option value="12">12.00%</option>
+                <option value="12.5">12.50%</option>
+                <option value="13">13.00%</option>
+                <option value="13.5">13.50%</option>
+                <option value="14">14.00%</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="tenure">Tenure (Months):</label>
+            <select id="tenure">
+                <option value="12">12 Months</option>
+                <option value="24">24 Months</option>
+                <option value="36">36 Months</option>
+                <option value="48">48 Months</option>
+                <option value="60">60 Months</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button onclick="calculateEMI()">Calculate EMI</button>
+        </div>
+
+        <div class="result" id="emiResult"></div>
+        <div class="note" id="emiBreakdownNote"></div>
+
+        <table class="breakdown">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Principal (₹)</th>
+                    <th>Interest (₹)</th>
+                    <th>Total EMI (₹)</th>
+                </tr>
+            </thead>
+            <tbody id="emiBreakdownTable">
+            </tbody>
+        </table>
+
+        <div class="form-group">
+            <button onclick="downloadCSV()">Download Output</button>
+        </div>
+
+        <div class="footer">
+            Created by <strong>Bala</strong><br>
+            <a href="https://medium.com/@kbala7092" target="_blank">Visit My Blog</a>
+        </div>
+    </div>
+
+    <script>
+        let calculationResults = {
+            monthlyData: [],
+            totals: {}
+        };
+
+        function roundToTwoDecimalPlaces(value) {
+            return (Math.round(value * 100) / 100).toFixed(2);
+        }
+
+        function calculateEMI() {
+            var loanAmount = parseFloat(document.getElementById("loanAmount").value);
+            var interestRate = parseFloat(document.getElementById("interestRate").value);
+            var tenure = document.getElementById("tenure").value;
+
+            calculationResults.monthlyData = [];
+            calculationResults.totals = {};
+
+            loanAmount = Math.round(loanAmount * 100) / 100;
+            
+            if (!loanAmount || !interestRate || !tenure) {
+                alert("Please enter all values!");
+                return;
+            }
+
+            var monthlyInterestRate = (interestRate / 100) / 12;
+            var emi = loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenure) / (Math.pow(1 + monthlyInterestRate, tenure) - 1);
+            emi = roundToTwoDecimalPlaces(emi);
+
+            document.getElementById("emiResult").innerHTML = `Your EMI is ₹${emi}`;
+
+            var breakdownHTML = "";
+            var principalRemaining = loanAmount;
+            var totalPrincipal = 0;
+            var totalInterest = 0;
+
+            for (var i = 1; i <= tenure; i++) {
+                var interest = roundToTwoDecimalPlaces(principalRemaining * monthlyInterestRate);
+                var principal;
+                
+                if (i === parseInt(tenure)) {
+                    principal = roundToTwoDecimalPlaces(principalRemaining);
+                    interest = roundToTwoDecimalPlaces(emi - principal);
+                } else {
+                    principal = roundToTwoDecimalPlaces(emi - interest);
+                }
+                
+                principalRemaining = roundToTwoDecimalPlaces(principalRemaining - principal);
+                
+                totalPrincipal += parseFloat(principal);
+                totalInterest += parseFloat(interest);
+
+                calculationResults.monthlyData.push({
+                    month: i,
+                    principal: principal,
+                    interest: interest,
+                    emi: emi
+                });
+
+                breakdownHTML += `<tr>
+                                    <td>${i}</td>
+                                    <td>₹${principal}</td>
+                                    <td>₹${interest}</td>
+                                    <td>₹${emi}</td>
+                                  </tr>`;
+            }
+
+            calculationResults.totals = {
+                principal: roundToTwoDecimalPlaces(totalPrincipal),
+                interest: roundToTwoDecimalPlaces(totalInterest),
+                amount: roundToTwoDecimalPlaces(parseFloat(totalPrincipal) + parseFloat(totalInterest))
+            };
+
+            breakdownHTML += `<tr>
+                                <td><strong>Total</strong></td>
+                                <td>₹${calculationResults.totals.principal}</td>
+                                <td>₹${calculationResults.totals.interest}</td>
+                                <td>₹${calculationResults.totals.amount}</td>
+                              </tr>`;
+
+            document.getElementById("emiBreakdownTable").innerHTML = breakdownHTML;
+            document.getElementById("emiBreakdownNote").innerHTML = "Your monthly payment breakdown is shown above.";
+        }
+
+        function downloadCSV() {
+            if (calculationResults.monthlyData.length === 0) {
+                alert("Please calculate EMI first!");
+                return;
+            }
+
+            let csv = 'Month,Principal,Interest,Total EMI\n';
+
+            calculationResults.monthlyData.forEach(row => {
+                csv += `${row.month},${row.principal},${row.interest},${row.emi}\n`;
+            });
+
+            csv += `Total,${calculationResults.totals.principal},${calculationResults.totals.interest},${calculationResults.totals.amount}\n`;
+
+            var csvBlob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            var link = document.createElement("a");
+            link.href = URL.createObjectURL(csvBlob);
+            link.download = "emi_breakdown.csv";
+            link.click();
+        }
+    </script>
+</body>
+</html>
